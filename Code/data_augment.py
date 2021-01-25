@@ -1,4 +1,5 @@
 import cv2
+import argparse
 import skimage as sk
 from skimage import transform
 from skimage import util
@@ -12,6 +13,25 @@ import os
 from PIL import Image
 from skimage.util import random_noise
 
+
+parser = argparse.ArgumentParser(description='Data Augmentation')
+parser.add_argument('--images_dir', '-img_dir', metavar='img_dir',
+                    default='/home/n-lab/Documents/Segmentation_Unet_Plants/Data/images',
+                    help='Directory for the images')
+parser.add_argument('--labels_dir', '-lab_dir', metavar='lab_dir',
+                    default='/home/n-lab/Documents/Segmentation_Unet_Plants/Data/labels',
+                    help='Directory for the labels')
+parser.add_argument('--augment_img_dir', '-aug_img_dir', metavar='aug_img_dir',
+                    default='/home/n-lab/Documents/Segmentation_Unet_Plants/Data/images_augmented',
+                    help='Directory for the Augmented images')
+parser.add_argument('--augment_lbl_dir', '-aug_lbl_dir', metavar='aug_lbl_dir',
+                    default='/home/n-lab/Documents/Segmentation_Unet_Plants/Data/labels_augmented',
+                    help='Directory for the Intermediate Augmented Labels')
+parser.add_argument('--fin_augment_lbl_dir', '-fin_aug_lbl_dir', metavar='fin_aug_lbl_dir',
+                    default='/home/n-lab/Documents/Segmentation_Unet_Plants/Data/labels_augmented_final',
+                    help='Directory for the Final Augmented Labels')
+
+args = parser.parse_args()
 
 def rotation(image, angle):
     return rotate(image, angle)
@@ -65,17 +85,17 @@ if __name__ == '__main__':
 
 
     #original Image and Label paths
-    image_path="/home/vtalreja/Documents/Signify_interview/images"
-    label_path="/home/vtalreja/Documents/Signify_interview/labels"
+    image_path=args.images_dir
+    label_path=args_labels_dir
 
     #Augmented Image and Label paths
-    augment_data_path="/home/vtalreja/Documents/Signify_interview/images_augmented_1"
-    augment_label_path="/home/vtalreja/Documents/Signify_interview/labels_augmented_1"
+    augment_data_path=args.augment_img_dir
+    augment_label_path=args.augment_lbl_dir
 
     # The labels converted in the above augmentation are in RGBA format but we need them to be
     # in the original Palette format. So after augmenting the dataset, we convert them into Palette format
     # and store it in this given directory and these are the final labels used in the segmentation model
-    final_aug_label_path="/home/vtalreja/Documents/Signify_interview/labels_augmented_1_Palette"
+    final_aug_label_path=args.fin_augment_lbl_dir
 
 
 
