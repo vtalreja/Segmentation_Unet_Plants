@@ -17,7 +17,6 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.parallel
-import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import torch.utils.data
 import torchvision.datasets as dset
@@ -28,7 +27,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torchsummary import summary
 import matplotlib.animation as animation
-# from IPython.display import HTML
 from torch.optim import lr_scheduler
 import datetime
 from shutil import copyfile
@@ -38,6 +36,18 @@ import dataset_utils
 import Unet_smaller
 from tools import *
 
+parser = argparse.ArgumentParser(description='Segmentation using UNet')
+parser.add_argument('--images_dir', '-img_dir', metavar='img_dir',
+                    default='/home/n-lab/Documents/Segmentation_Unet_Plants/Data/images',
+                    help='Directory for the images')
+parser.add_argument('--labels_dir', '-lab_dir', metavar='lab_dir',
+                    default='/home/n-lab/Documents/Segmentation_Unet_Plants/Data/labels',
+                    help='Directory for the labels')
+parser.add_argument('--results_dir', '-re_dir', metavar='re_dir',
+                    default='/home/n-lab/Documents/Segmentation_Unet_Plants/Results',
+                    help='Directory to save the figures and the models')
+
+args = parser.parse_args()
 
 # Set random seed for reproducibility
 # manualSeed = 999
@@ -47,8 +57,8 @@ from tools import *
 # torch.manual_seed(manualSeed)
 
 # Root directory for dataset
-Images = "/home/n-lab/Documents/Segmentation_Unet_Plants/Data/images"
-Labels="/home/n-lab/Documents/Segmentation_Unet_Plants/Data/labels"
+Images = args.images_dir
+Labels = args.labels_dir
 
 # Number of workers for dataloader
 workers = 2
@@ -56,132 +66,123 @@ workers = 2
 # Batch size during training
 batch_size = 8
 
-
 # Number of training epochs
 num_epochs = 50
 
 # Learning rate for optimizers
 lr = 0.01
-target_lr=0.001
-
+target_lr = 0.001
 
 # Number of GPUs available. Use 0 for CPU mode.
-ngpu = 2
+ngpu = 1
 
-#Location to store your new checkpoints
-# check_points_location='/content/gdrive/My Drive/Signify_project/Results'
-
-#Location to store your new checkpoints, and all the segmented and real images
-dir_name = '/home/n-lab/Documents/Segmentation_Unet_Plants/Results/'
-if not (os.path.exists(dir_name)):
-   os.mkdir(dir_name)
+# Location to store your new checkpoints, and all the segmented and real images
+results_dir = args.results_dir
+if not (os.path.exists(results_dir)):
+    os.mkdir(results_dir)
 
 # Copy the current script to the directory
 src_script = sys.argv[0]
-dst_script = dir_name + '/script.py'
-copyfile(src_script,dst_script)
+dst_script = results_dir + '/script.py'
+copyfile(src_script, dst_script)
 
 
-
-
-# Functon to load the data and return the DataLoaders					
+# Functon to load the data and return the DataLoaders
 def load_data(Images_dir, Labels_dir):
+    folder_data = glob.glob(Images_dir + '/*.png')
+    folder_mask = glob.glob(Labels_dir + '/*.png')
 
-	folder_data = glob.glob(Images_dir +'/*.png')
-	folder_mask = glob.glob(Labels_dir +'/*.png')
+    len_data = len(folder_data)
+    print("count of dataset: ", len_data)
 
+    folder_data.sort()
+    folder_mask.sort()
 
-	len_data = len(folder_data)
-	print("count of dataset: ", len_data)
+    # Shuffle the images in the Image and Label folders simultaneously to maintain one to one correspondence
+    c = list(zip(folder_data, folder_mask))
+    random.shuffle(c)
+    folder_data, folder_mask = zip(*c)
 
-	folder_data.sort()
-	folder_mask.sort()
-	
-  # Shuffle the images in the Image and Label folders simultaneously to maintain one to one correspondence
-	c=list(zip(folder_data,folder_mask))
-	random.shuffle(c)
-	folder_data,folder_mask=zip(*c)
- 
-  # Split the dataset into training, validation and testing
-	split_1 = int(0.8 * len(folder_data))
-	split_2 = int(0.9 * len(folder_data))
+    # Split the dataset into training, validation and testing
+    split_1 = int(0.8 * len(folder_data))
+    split_2 = int(0.9 * len(folder_data))
 
-	train_image_paths = folder_data[:split_1]
-	print("count of train images is: ", len(train_image_paths))
+    train_image_paths = folder_data[:split_1]
+    print("count of train images is: ", len(train_image_paths))
 
-	valid_image_paths = folder_data[split_1:split_2]
-	print("count of validation images is: ", len(valid_image_paths))
+    valid_image_paths = folder_data[split_1:split_2]
+    print("count of validation images is: ", len(valid_image_paths))
 
-	test_image_paths = folder_data[split_2:]
-	print("count of test images is: ", len(test_image_paths))
+    test_image_paths = folder_data[split_2:]
+    print("count of test images is: ", len(test_image_paths))
 
-	train_mask_paths = folder_mask[:split_1]
+    train_mask_paths = folder_mask[:split_1]
 
-	valid_mask_paths = folder_mask[split_1:split_2]
+    valid_mask_paths = folder_mask[split_1:split_2]
 
-	test_mask_paths = folder_mask[split_2:]
+    test_mask_paths = folder_mask[split_2:]
 
+    train_dataset = dataset_utils.MyDataset(train_image_paths, train_mask_paths)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-	train_dataset = dataset_utils.MyDataset(train_image_paths, train_mask_paths)
-	train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+    valid_dataset = dataset_utils.MyDataset(valid_image_paths, valid_mask_paths)
+    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-	valid_dataset = dataset_utils.MyDataset(valid_image_paths, valid_mask_paths)
-	valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+    test_dataset = dataset_utils.MyDataset(test_image_paths, test_mask_paths)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
+    return train_loader, valid_loader, test_loader
 
-	test_dataset = dataset_utils.MyDataset(test_image_paths, test_mask_paths)
-	test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
-	return train_loader,valid_loader,test_loader
 
 # Function to evaluate on test data
 def evaluate(tst_loader):
-  dice_loss_test_sum=[]
-  jacc_loss_test_sum=[]
-  dice_test_sum=[]
-  jacc_test_sum=[]
-  model.eval()
-  for iterator,data_test_iter in enumerate (tst_loader):
-    images_test,labels_test=data_test_iter
-    images_test = images_test.to(device)
-    labels_test=labels_test.to(device)
-    with torch.no_grad():
-     outputs_test=model(images_test.detach())
-     dice_loss_test,jacc_loss_test,jacc_test,dice_test=dice_loss(outputs_test,labels_test)
-    dice_loss_test_sum.append(dice_loss_test.item())
-    jacc_loss_test_sum.append(jacc_loss_test.item())
-    jacc_test_sum.append(jacc_test.item())
-    dice_test_sum.append(dice_test.item())
-  dice_loss_test_avg=sum(dice_loss_test_sum)/len(dice_loss_test_sum)
-  jacc_loss_test_avg=sum(jacc_loss_test_sum)/len(jacc_loss_test_sum)
-  dice_test_avg=sum(dice_test_sum)/len(dice_test_sum)
-  jacc_test_avg=sum(jacc_test_sum)/len(jacc_test_sum)
-  return outputs_test,images_test,labels_test,dice_loss_test_avg,jacc_loss_test_avg,dice_test_avg,jacc_test_avg
+    dice_loss_test_sum = []
+    jacc_loss_test_sum = []
+    dice_test_sum = []
+    jacc_test_sum = []
+    model.eval()
+    for iterator, data_test_iter in enumerate(tst_loader):
+        images_test, labels_test = data_test_iter
+        images_test = images_test.to(device)
+        labels_test = labels_test.to(device)
+        with torch.no_grad():
+            outputs_test = model(images_test.detach())
+            dice_loss_test, jacc_loss_test, jacc_test, dice_test = dice_loss(outputs_test, labels_test)
+        dice_loss_test_sum.append(dice_loss_test.item())
+        jacc_loss_test_sum.append(jacc_loss_test.item())
+        jacc_test_sum.append(jacc_test.item())
+        dice_test_sum.append(dice_test.item())
+    dice_loss_test_avg = sum(dice_loss_test_sum) / len(dice_loss_test_sum)
+    jacc_loss_test_avg = sum(jacc_loss_test_sum) / len(jacc_loss_test_sum)
+    dice_test_avg = sum(dice_test_sum) / len(dice_test_sum)
+    jacc_test_avg = sum(jacc_test_sum) / len(jacc_test_sum)
+    return outputs_test, images_test, labels_test, dice_loss_test_avg, jacc_loss_test_avg, dice_test_avg, jacc_test_avg
 
 
 def adjust_learning_rate(optimizer, init_lr, target_lr, epoch, factor, every):
-  lrd = (init_lr-target_lr) / every
-  old_lr = optimizer.param_groups[0]['lr']
-   # linearly decaying lr
-  lr = old_lr - lrd
-  if lr < 0: lr = 0
-  for param_group in optimizer.param_groups:
-    param_group['lr'] = lr
+    lrd = (init_lr - target_lr) / every
+    old_lr = optimizer.param_groups[0]['lr']
+    # linearly decaying lr
+    lr = old_lr - lrd
+    if lr < 0: lr = 0
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
 
 
 # Decide which device we want to run on
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
 # Prepare the DataLoaders
-tr_loader,vl_loader,tst_loader=load_data(Images,Labels)
+tr_loader, vl_loader, tst_loader = load_data(Images, Labels)
 
 # Model instantiation and printing the modelsummary
-model=Unet_smaller.UNet(1).to(device)
-summary(model,(3,224,224))
+model = Unet_smaller.UNet(1).to(device)
+summary(model, (3, 224, 224))
 
 # BCE loss and Adam optimizer
 criterion = nn.BCELoss()
-optimizer= optim.Adam(model.parameters(), lr=lr)
+optimizer = optim.Adam(model.parameters(), lr=lr)
 
-#Uncomment the below lines for using SGD optimizer with other learning rate schedulers
+# Uncomment the below lines for using SGD optimizer with other learning rate schedulers
 # optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=0.00005, momentum=0.90)
 # scheduler = lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 # scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.6)
@@ -189,11 +190,10 @@ optimizer= optim.Adam(model.parameters(), lr=lr)
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
-	model = nn.DataParallel(model, list(range(ngpu)))
+    model = nn.DataParallel(model, list(range(ngpu)))
 
 # Print the model
 print(model)
-
 
 # Training Loop
 
@@ -201,153 +201,148 @@ print(model)
 img_list = []
 tr_losses = []
 val_losses = []
-tr_dice=[]
-tr_jacc=[]
-val_dice=[]
-val_jacc=[]
-test_dice=[]
-test_jacc=[]
+tr_dice = []
+tr_jacc = []
+val_dice = []
+val_jacc = []
+test_dice = []
+test_jacc = []
 D_losses = []
 iters = 0
-lr_list=[]
+lr_list = []
 
 print("Starting Training Loop...")
 
 for epoch in range(num_epochs):  # loop over the dataset multiple times
 
-	for i, data in enumerate(tr_loader, 0):
-		# get the inputs; data is a list of [inputs, labels]
-		inputs, labels = data
-		inputs=inputs.to(device)
-		labels=labels.to(device)
-		data_val_iter=iter(vl_loader)
-		images_val, labels_val = data_val_iter.next()
-		images_val=images_val.to(device)
-		labels_val=labels_val.to(device)
-		
-		
-		# zero the parameter gradients
-		optimizer.zero_grad()
+    for i, data in enumerate(tr_loader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        data_val_iter = iter(vl_loader)
+        images_val, labels_val = data_val_iter.next()
+        images_val = images_val.to(device)
+        labels_val = labels_val.to(device)
 
-		# forward + backward + optimize
-		outputs=model(inputs)
-		bce_loss_tr = criterion(outputs, labels)
-		dice_loss_tr,jacc_loss_tr,jacc_tr,dice_tr=dice_loss(outputs,labels)
-		loss=loss_function(bce_loss=bce_loss_tr,dice_loss=jacc_loss_tr,bce_weight=0.5)
-		loss.backward()
-		optimizer.step()
-		lr_1 = optimizer.param_groups[0]['lr']
-		lr_list.append(lr_1)
-    
+        # zero the parameter gradients
+        optimizer.zero_grad()
 
+        # forward + backward + optimize
+        outputs = model(inputs)
+        bce_loss_tr = criterion(outputs, labels)
+        dice_loss_tr, jacc_loss_tr, jacc_tr, dice_tr = dice_loss(outputs, labels)
+        loss = loss_function(bce_loss=bce_loss_tr, dice_loss=jacc_loss_tr, bce_weight=0.5)
+        loss.backward()
+        optimizer.step()
+        lr_1 = optimizer.param_groups[0]['lr']
+        lr_list.append(lr_1)
 
-		# Output training stats
-		if i % 2 == 0:
-			model.eval()
-			with torch.no_grad():
-				outputs_val = model(images_val.detach())
-				bce_loss_val=criterion(outputs_val,labels_val)
-				dice_loss_val,jacc_loss_val,jacc_val,dice_val=dice_loss(outputs_val,labels_val)
-				loss_val=loss_function(bce_loss=bce_loss_val,dice_loss=jacc_loss_val,bce_weight=0.5)
-			model.train()
-			print('[%d/%d][%d/%d]\tLoss: %.4f\tLoss_Val: %.4f\tDice: %.4f\tDice_Val: %.4f\tJaccard: %.4f\tJaccard_Val: %.4f\tLearning Rate: %f'
-				  % (epoch, num_epochs, i, len(tr_loader),
-					 loss.item(),loss_val.item(),dice_tr.item(),dice_val.item(),jacc_tr.item(),jacc_val.item(),lr_1))
+        # Output training stats
+        if i % 2 == 0:
+            model.eval()
+            with torch.no_grad():
+                outputs_val = model(images_val.detach())
+                bce_loss_val = criterion(outputs_val, labels_val)
+                dice_loss_val, jacc_loss_val, jacc_val, dice_val = dice_loss(outputs_val, labels_val)
+                loss_val = loss_function(bce_loss=bce_loss_val, dice_loss=jacc_loss_val, bce_weight=0.5)
+            model.train()
+            print(
+                '[%d/%d][%d/%d]\tLoss: %.4f\tLoss_Val: %.4f\tDice: %.4f\tDice_Val: %.4f\tJaccard: %.4f\tJaccard_Val: %.4f\tLearning Rate: %f'
+                % (epoch, num_epochs, i, len(tr_loader),
+                   loss.item(), loss_val.item(), dice_tr.item(), dice_val.item(), jacc_tr.item(), jacc_val.item(),
+                   lr_1))
 
-		# Save Losses and performance metrics for plotting later
-		tr_losses.append(loss.item())
-		val_losses.append(loss_val.item())
-		tr_dice.append(dice_tr.item())
-		val_dice.append(dice_val.item())
-		tr_jacc.append(jacc_tr.item())
-		val_jacc.append(jacc_val.item())
+        # Save Losses and performance metrics for plotting later
+        tr_losses.append(loss.item())
+        val_losses.append(loss_val.item())
+        tr_dice.append(dice_tr.item())
+        val_dice.append(dice_val.item())
+        tr_jacc.append(jacc_tr.item())
+        val_jacc.append(jacc_val.item())
 
-		iters += 1
-	outputs_test,images_test,labels_test,dice_loss_test_avg,jacc_loss_test_avg,dice_test_avg,jacc_test_avg=evaluate(tst_loader)
-	model.train()
+        iters += 1
+    outputs_test, images_test, labels_test, dice_loss_test_avg, jacc_loss_test_avg, dice_test_avg, jacc_test_avg = evaluate(
+        tst_loader)
+    model.train()
 
-  
+    if (epoch % 4 == 0):
+        print('[%d/%d][%d/%d]\tDice_Test: %.4f\tJaccard_Test: %.4f'
+              % (epoch, num_epochs, i, len(tr_loader),
+                 dice_test_avg, jacc_test_avg))
+    test_dice.append(dice_test_avg)
+    test_jacc.append(jacc_test_avg)
+    # test_dice.append(dice_test.item())
+    # test_jacc.append(jacc_test.item())
 
-	if (epoch % 4==0):
-		print('[%d/%d][%d/%d]\tDice_Test: %.4f\tJaccard_Test: %.4f'
-				  % (epoch, num_epochs, i, len(tr_loader),
-					 dice_test_avg,jacc_test_avg))
-	test_dice.append(dice_test_avg)
-	test_jacc.append(jacc_test_avg)
-	# test_dice.append(dice_test.item())
-  # test_jacc.append(jacc_test.item())
+    # Display the Input Test Images
+    plt.figure(figsize=(15, 15))
+    plt.subplot(1, 3, 1)
+    plt.axis("off")
+    plt.title("Real Test Images")
+    with torch.no_grad():
+        plt.imshow(np.transpose(vutils.make_grid(images_test.to(device), padding=5).cpu(), (1, 2, 0)))
 
-	
+    # Display the Segmented Test Images
+    plt.subplot(1, 3, 2)
+    plt.axis("off")
+    plt.title("Seg Test Images")
+    with torch.no_grad():
+        plt.imshow(np.transpose(vutils.make_grid(outputs_test.to(device), padding=5).cpu(), (1, 2, 0)))  # plt.show()
 
-  # Display the Input Test Images
-	plt.figure(figsize=(15, 15))
-	plt.subplot(1, 3, 1)
-	plt.axis("off")
-	plt.title("Real Test Images")
-	with torch.no_grad():
-		plt.imshow(np.transpose(vutils.make_grid(images_test.to(device), padding=5).cpu(), (1, 2, 0)))
-	
+    # Display the Ground Truth Test Images
+    plt.subplot(1, 3, 3)
+    plt.axis("off")
+    plt.title("GT Test Labels")
+    with torch.no_grad():
+        plt.imshow(np.transpose(vutils.make_grid(labels_test.to(device), padding=5).cpu(), (1, 2, 0)))
+    plt.savefig('%s/Real_and_Segmented_Images_Testing_%d.png' % (results_dir, epoch))
 
-	# Display the Segmented Test Images
-	plt.subplot(1, 3, 2)
-	plt.axis("off")
-	plt.title("Seg Test Images")
-	with torch.no_grad():
-		plt.imshow(np.transpose(vutils.make_grid(outputs_test.to(device), padding=5).cpu(), (1, 2, 0)))	#plt.show()
-	
-  # Display the Ground Truth Test Images
-	plt.subplot(1, 3, 3)
-	plt.axis("off")
-	plt.title("GT Test Labels")
-	with torch.no_grad():
-		plt.imshow(np.transpose(vutils.make_grid(labels_test.to(device), padding=5).cpu(), (1, 2, 0)))
-	plt.savefig('%s/Real_and_Segmented_Images_Testing_%d.png' % (dir_name, epoch))
+    # Saving the model every 4 epochs
+    if epoch % 4 == 0:
+        torch.save(model.state_dict(), '%s/Unet_epoch_%d.pth' % (results_dir, epoch))
 
-  # Saving the model every 4 epochs
-	if epoch % 4 == 0:
-		torch.save(model.state_dict(), '%s/Unet_epoch_%d.pth' % (dir_name, epoch))
-
-	# Learning rate update for Linear scheduler. Comment this line and uncomment the next line when using the Step or Exponential scheduler
-	adjust_learning_rate(optimizer,lr,target_lr,epoch,None,num_epochs)
-	# scheduler.step()
+    # Learning rate update for Linear scheduler. Comment this line and uncomment the next line when using the Step or Exponential scheduler
+    adjust_learning_rate(optimizer, lr, target_lr, epoch, None, num_epochs)
+# scheduler.step()
 
 # Plotting the training and validation losses
 plt.figure(figsize=(10, 5))
 plt.title("Training and Validation Loss")
 plt.plot(tr_losses, label="Training")
-plt.plot(val_losses,label="Val")
+plt.plot(val_losses, label="Val")
 plt.xlabel("iterations")
 plt.ylabel("Loss")
 plt.legend()
-plt.savefig('%s/Losses.png' % (dir_name))
+plt.savefig('%s/Losses.png' % (results_dir))
 
 # Plotting Dice Coeff for training and validation images in a batch  
 plt.figure(figsize=(10, 5))
 plt.title("Dice Coeff")
 plt.plot(tr_dice, label="Training")
-plt.plot(val_dice,label="Val")
+plt.plot(val_dice, label="Val")
 plt.xlabel("Iterations")
 plt.ylabel("Dice")
 plt.legend()
-plt.savefig('%s/Dice_train_Val.png' % (dir_name))
+plt.savefig('%s/Dice_train_Val.png' % (results_dir))
 
 # Plotting Jaccard Index for training and validation images in a batch 
 plt.figure(figsize=(10, 5))
 plt.title("Jacc Values")
 plt.plot(tr_jacc, label="Training")
-plt.plot(val_jacc,label="Val")
+plt.plot(val_jacc, label="Val")
 plt.xlabel("Iterations")
 plt.ylabel("Jaccard")
 plt.legend()
-plt.savefig('%s/Jaccard_train_Val.png' % (dir_name))
+plt.savefig('%s/Jaccard_train_Val.png' % (results_dir))
 
 # Plotting Dice Coeff and Jaccard Index for all the test images 
 plt.figure(figsize=(10, 5))
 plt.title("Dice and Jaccard Values Testing")
 plt.plot(test_dice, label="Dice")
-plt.plot(test_jacc,label="Jaccard")
+plt.plot(test_jacc, label="Jaccard")
 plt.xlabel("Epochs")
 plt.ylabel("Dice and Jaccard")
 plt.legend()
-#plt.show()
-plt.savefig('%s/Dice_Jaccard_test.png' % (dir_name))
+# plt.show()
+plt.savefig('%s/Dice_Jaccard_test.png' % (results_dir))
