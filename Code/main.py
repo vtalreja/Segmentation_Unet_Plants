@@ -35,12 +35,9 @@ from shutil import copyfile
 import glob
 
 import dataset_utils
-import Unet
 import Unet_smaller
 from tools import *
 
-from google.colab import drive
-drive.mount('/content/gdrive')
 
 # Set random seed for reproducibility
 # manualSeed = 999
@@ -50,8 +47,8 @@ drive.mount('/content/gdrive')
 # torch.manual_seed(manualSeed)
 
 # Root directory for dataset
-Images = "/home/n-lab/Documents/Signify/Data/images"
-Labels="/home/n-lab/Documents/Signify/Data/labels"
+Images = "/home/n-lab/Documents/Segmentation_Unet_Plants/Data/images"
+Labels="/home/n-lab/Documents/Segmentation_Unet_Plants/Data/labels"
 
 # Number of workers for dataloader
 workers = 2
@@ -69,13 +66,13 @@ target_lr=0.001
 
 
 # Number of GPUs available. Use 0 for CPU mode.
-ngpu = 1
+ngpu = 2
 
 #Location to store your new checkpoints
 # check_points_location='/content/gdrive/My Drive/Signify_project/Results'
 
 #Location to store your new checkpoints, and all the segmented and real images
-dir_name = '/home/n-lab/Documents/Signify/Results/'
+dir_name = '/home/n-lab/Documents/Segmentation_Unet_Plants/Results/'
 if not (os.path.exists(dir_name)):
    os.mkdir(dir_name)
 
@@ -254,7 +251,7 @@ for epoch in range(num_epochs):  # loop over the dataset multiple times
 				loss_val=loss_function(bce_loss=bce_loss_val,dice_loss=jacc_loss_val,bce_weight=0.5)
 			model.train()
 			print('[%d/%d][%d/%d]\tLoss: %.4f\tLoss_Val: %.4f\tDice: %.4f\tDice_Val: %.4f\tJaccard: %.4f\tJaccard_Val: %.4f\tLearning Rate: %f'
-# 				  % (epoch, num_epochs, i, len(tr_loader),
+				  % (epoch, num_epochs, i, len(tr_loader),
 					 loss.item(),loss_val.item(),dice_tr.item(),dice_val.item(),jacc_tr.item(),jacc_val.item(),lr_1))
 
 		# Save Losses and performance metrics for plotting later
@@ -273,7 +270,7 @@ for epoch in range(num_epochs):  # loop over the dataset multiple times
 
 	if (epoch % 4==0):
 		print('[%d/%d][%d/%d]\tDice_Test: %.4f\tJaccard_Test: %.4f'
-# 				  % (epoch, num_epochs, i, len(tr_loader),
+				  % (epoch, num_epochs, i, len(tr_loader),
 					 dice_test_avg,jacc_test_avg))
 	test_dice.append(dice_test_avg)
 	test_jacc.append(jacc_test_avg)
