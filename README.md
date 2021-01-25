@@ -14,3 +14,10 @@ In this augmentation method, the images are augmented on the fly and not stored 
 
 # Loss Function
 Weighted combination of binary cross entropy loss and the Jaccard (IOU) loss has been used as the loss function.
+
+# Performance Metrics
+The performance metrics used for evaluating the model are Jaccard Index ( also know as Intersection over Union (IOU) and Dice coefficient (also known as F1-score). Jaccard index is the area of overlap between the predicted segmentation and the ground truth divided by the area of union between the predicted segmentation and the ground truth. It is a very common metric used for segmentation applications. Similarly, Dice coefficient is twice the the area of overlap divided by the total number of pixels in both images. 
+
+# Performance Evaluation
+There was no state-of-the comparison, however there was a lot of hyperparameter tuning performed, the results of which are given in Tables below.
+
