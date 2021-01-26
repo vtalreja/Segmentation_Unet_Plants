@@ -66,3 +66,10 @@ There was no state-of-the comparison, however there was a lot of hyperparameter 
 | STATIC      |  97.19           |   94.57      |      96.44        | 93.18
 
 
+### Segmentation on Test Images
+
+Given below are some of the test images along with the ground truth and segmentation results. These images are given in the Results Folder. There are two pretrained models provided in the Result Folder. These are the models using the best combination of hyper parameters (batch size of 8 with Adam optimizer and a linear learning rate scheduler with starting learning rate of 0.01).
+
+![alternativetext](Results/Real_and_Segmented_Images_Testing_44.png)
+
+
