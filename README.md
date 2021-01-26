@@ -8,7 +8,9 @@ Pip package manager
 # Usage
 1. Download or clone the zip folder 
 2. cd to the extracted folder 'Segmentation_Unet_Plants'
-3. Add the Python requirements: pip3 install -r requirements.txt
+3. Add the Python requirements: ```shell
+pip3 install -r requirements.txt
+```
 4. cd to folder 'Code' in the 'Segmentation_Unet_Plants' folder
 5. Run the script main.py to train the model on the given dataset. You can run the script main.py at the terminal by running the following command:
 ```shell
