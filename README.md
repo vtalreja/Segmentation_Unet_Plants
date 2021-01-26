@@ -21,12 +21,11 @@ The performance metrics used for evaluating the model are Jaccard Index ( also k
 # Performance Evaluation
 There was no state-of-the comparison, however there was a lot of hyperparameter tuning performed, the results of which are given in Tables below.
 
-Colons can be used to align columns.
 
 | Learning Rate | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
 | :-----------: |:-------------:    | :-----:     |   :-----:         |  :-----: |
-|   0.0001      |  88.01           |   78.35      
-|   0.0002      |  93.12           |   86.98
+|   0.0001      |  88.01           |   78.35            87.5           
+|   0.0002      |  93.12           |   86.98            92.82
 |   0.0003      |  95.01           |   90.04
 |   0.0004      |  94.98           |   89.89
 |   0.0005      |  95.38           |   91.18
