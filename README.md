@@ -3,6 +3,7 @@ Repository for semantic segmentation of plants using UNet architecture. In this 
 
 # Prerequisites
 Python 3.6
+
 Pip package manager
 
 # Usage
