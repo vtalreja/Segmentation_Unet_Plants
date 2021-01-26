@@ -1,6 +1,20 @@
 # Segmentation_Unet_Plants
 Repository for semantic segmentation of plants using UNet architecture. In this repo, a segmentation model for a plant dataset has been implemented. The segmentation model has been implemented using a famous neural network architecture UNet. In this implementation, the UNet architecture is not totally symmetric (number of encoding blocks equal to decoding blocks) and so, in that way it can also be considered as a Fully Convolutional network (FCN) architecture. 
 
+# Prerequisites
+Python 3.6
+Pip package manager
+
+# Usage
+1. Download or clone the zip folder 
+2. cd to the extracted folder 'Segmentation_Unet_Plants'
+3. Add the Python requirements: pip3 install -r requirements.txt
+4. cd to folder 'Code' in the 'Segmentation_Unet_Plants' folder
+5. Run the script main.py to train the model on the given dataset. You can run the script main.py at the terminal by running the following command:
+python main.py --images_dir '../Data/images' --labels_dir '../Data/labels' --results_dir '../Results'
+Note that in the above command relative paths are given but it is always better to specify absolute path to the image, label and results dir.
+
+
 # Dataset
 The dataset used is very small with only about 160 images. The ground truth labels are also provided for each image. Note that we are trying to design a semantic segmentation model, not an instance segmentation model. However, the labels are for instance segmentation. So, we need to binarize the labels before we train the model. This binarization is done in the get_item function in the MyDataset Class in the dataset_utils.py file. 
 
