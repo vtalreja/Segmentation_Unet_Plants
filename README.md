@@ -2,7 +2,9 @@
 Repository for semantic segmentation of plants using UNet architecture. In this repo, a segmentation model for a plant dataset has been implemented. The segmentation model has been implemented using a famous neural network architecture UNet. In this implementation, the UNet architecture is not totally symmetric (number of encoding blocks equal to decoding blocks) and so, in that way it can also be considered as a Fully Convolutional network (FCN) architecture. 
 
 # Dataset
-The dataset used is very small with only about 160 images. The ground truth labels are also provided for each image. It could be observed from the dataset that there were 2 kinds of plants, one kind of plants, where the leaves were more symmetric and consistent in shape, there were about 112 images of these kind. The rest 48 images were of different kind of plant where the leaves were little unsymmetrical. The dataset was shuffled using both kind of plants and splitting
+The dataset used is very small with only about 160 images. The ground truth labels are also provided for each image. Note that we are trying to design a semantic segmentation model, not an instance segmentation model. However, the labels are for instance segmentation. So, we need to binarize the labels before we train the model. This binarization is done in the get_item function in the MyDataset Class in the dataset_utils.py file. 
+
+It could be observed from the dataset that there were 2 kinds of plants, one kind of plants, where the leaves were more symmetric and consistent in shape, there were about 112 images of these kind. The rest 48 images were of different kind of plant where the leaves were little unsymmetrical. The dataset was shuffled using both kind of plants and splitting
 it into training, validation and testing split of 80,10, and 10 percent respectively.
 
 # Data Augmentation
