@@ -21,7 +21,7 @@ The performance metrics used for evaluating the model are Jaccard Index ( also k
 # Performance Evaluation
 There was no state-of-the comparison, however there was a lot of hyperparameter tuning performed, the results of which are given in Tables below.
 
-
+## Table 1: DICE AND IOU VALUES FOR DIFFERENT LEARNING RATES AT A BATCH SIZE OF 16, WITH SGD OPTIMIZAATION AND MOMENTUM OF 0.9
 | Learning Rate | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
 | :-----------: |:-------------:    | :-----:     |   :-----:         |  :-----: |
 |   0.0001      |  88.01           |   78.35      |     87.5          | 78.11 
@@ -35,3 +35,12 @@ There was no state-of-the comparison, however there was a lot of hyperparameter 
 |   0.0009      |  95.76           |   91.93      |      96.42        | 93.12
 |   0.001       |  96.2           |   92.72       |      96.21        | 92.73
 |   0.002       |  95.74           |   91.89      |      96.72        | 93.67
+
+## Table 2: D ICE AND IOU VALUES FOR DIFFERENT BATCH SIZES AT A LEARNING RATE OF 0.001 WITH SGD OPTIMIZAATION AND MOMENTUM OF 0.9
+| BatchSize | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
+| :-----------: |:-------------:    | :-----:     |   :-----:         |  :-----: |
+|   16      |  96.2           |   92.72      |     96.21          | 92.73 
+|   8      |  97.03           |   94.23      |      96.34        | 93
+|   4      |  97.56           |   95.24      |      95.84        | 92.1
+
+
