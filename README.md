@@ -8,7 +8,8 @@ Pip package manager
 # Usage
 1. Download or clone the zip folder 
 2. cd to the extracted folder 'Segmentation_Unet_Plants'
-3. Add the Python requirements: ```shell
+3. Add the Python requirements: 
+```shell
 pip3 install -r requirements.txt
 ```
 4. cd to folder 'Code' in the 'Segmentation_Unet_Plants' folder
