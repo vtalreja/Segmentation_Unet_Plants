@@ -21,7 +21,7 @@ The performance metrics used for evaluating the model are Jaccard Index ( also k
 # Performance Evaluation
 There was no state-of-the comparison, however there was a lot of hyperparameter tuning performed, the results of which are given in Tables below.
 
-### Table 1: DICE AND IOU VALUES FOR DIFFERENT LEARNING RATES AT A BATCH SIZE OF 16, WITH SGD OPTIMIZAATION AND MOMENTUM OF 0.9
+### Table 1: DICE and IOU VALUES for different LEARNING RATES at a BATCH SIZE OF 16, with SGD OPTIMIZATION and MOMENTUM OF 0.9
 | Learning Rate | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
 | :-----------: |:-------------:    | :-----:     |   :-----:         |  :-----: |
 |   0.0001      |  88.01           |   78.35      |     87.5          | 78.11 
@@ -36,17 +36,31 @@ There was no state-of-the comparison, however there was a lot of hyperparameter 
 |   0.001       |  96.2           |   92.72       |      96.21        | 92.73
 |   0.002       |  95.74           |   91.89      |      96.72        | 93.67
 
-### Table 2: DICE AND IOU VALUES FOR DIFFERENT BATCH SIZES AT A LEARNING RATE OF 0.001 WITH SGD OPTIMIZAATION AND MOMENTUM OF 0.9
+### Table 2: DICE and IOU values for different BATCH SIZES at a LEARNING RATE of 0.001 with SGD OPTIMIZATION and MOMENTUM OF 0.9
 | BatchSize | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
 | :-----------: |:-------------:    | :-----:     |   :-----:         |  :-----: |
 |   16      |  96.2           |   92.72      |     96.21          | 92.73 
 |   8      |  97.03           |   94.23      |      96.34        | 93
 |   4      |  97.56           |   95.24      |      95.84        | 92.1
 
-### Table 3: DICE AND IOU VALUES FOR DIFFERENT BATCH SIZES AT A LEARNING RATE OF 0.001 WITH SGD OPTIMIZAATION AND MOMENTUM OF 0.9
+### Table 3: DICE and IOU values for different LR SCHEDULER along with the starting LEARNING RATE for BATCH SIZE of 8 with SGD OPTIMIZATION and MOMENTUM of 0.9
 | LRscheduler − startLR | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
 | :-----------:         |:-------------:    | :-----:     |   :-----:         |  :-----: |
 |   Step LR - 0.001      |  93.78           |   88.44      |     96.13          | 92.56 
 | Linear - 0.001      |  96.71           |   93.64      |      95.66        | 91.77
 |  Linear - 0.01     |  97.56           |   95.24      |      95.84        | 92.1
 | Exponential - 0.1|   96.43            |  93.98       |      95.76        | 92.76
+
+### Table 4: DICE and IOU values for different OPTIMIZERS along with the starting LINEAR SCHEDULER at a starting RATE of 0.01 for BATCH SIZE OF 8
+| Optimizer | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
+| :-----------:         |:-------------:    | :-----:     |   :-----:         |  :-----: |
+|   ADAM     |  97.25           |   94.66      |     97.28          | 94.72 
+| SGD      |  97.2           |   93.8      |      96.99        | 94.19
+
+### Table 5: DICE and IOU values for different AUGMENTATION METHODS with ADAM OPTIMIZER and starting LINEAR SCHEDULER at a starting RATE of 0.01 
+| Optimizer | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
+| :-----------:         |:-------------:    | :-----:     |   :-----:         |  :-----: |
+|   PYTORCH (On the Fly)   |  97.25           |   94.66      |     97.28          | 94.72 
+| STATIC      |  97.19           |   94.57      |      96.44        | 93.18
+
+
