@@ -19,7 +19,7 @@ Weighted combination of binary cross entropy loss and the Jaccard (IOU) loss has
 The performance metrics used for evaluating the model are Jaccard Index ( also know as Intersection over Union (IOU) and Dice coefficient (also known as F1-score). Jaccard index is the area of overlap between the predicted segmentation and the ground truth divided by the area of union between the predicted segmentation and the ground truth. It is a very common metric used for segmentation applications. Similarly, Dice coefficient is twice the the area of overlap divided by the total number of pixels in both images. 
 
 # Performance Evaluation
-There was no state-of-the comparison, however there was a lot of hyperparameter tuning performed, the results of which are given in Tables below.
+There was no state-of-the comparison, however there was a lot of hyperparameter tuning performed, the results of which are given in Tables below.From the experiments and hyper parameter tuning, I would like to mention that a batch size of 8 with Adam optimizer and a linear learning rate scheduler with starting learning rate of 0.01 would be the best combination of hyper parameters for this UNet model.
 
 ### Table 1: DICE and IOU VALUES for different LEARNING RATES at a BATCH SIZE OF 16, with SGD OPTIMIZATION and MOMENTUM OF 0.9
 | Learning Rate | DiceCoeff-Val (%) | IOU-Val (%) | DiceCoeff-Val (%) | IOU-Test (%) |
