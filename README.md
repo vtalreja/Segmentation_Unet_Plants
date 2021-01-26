@@ -12,6 +12,7 @@ Pip package manager
 4. cd to folder 'Code' in the 'Segmentation_Unet_Plants' folder
 5. Run the script main.py to train the model on the given dataset. You can run the script main.py at the terminal by running the following command:
 python main.py --images_dir '../Data/images' --labels_dir '../Data/labels' --results_dir '../Results'
+
 Note that in the above command relative paths are given but it is always better to specify absolute path to the image, label and results dir.
 
 
